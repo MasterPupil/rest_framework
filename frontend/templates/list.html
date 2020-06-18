@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>TODO APP</h2>
+    <div>
+        <form id='form' action="" method="POST"> {% csrf_token %}
+            <input id="input_form" type="text">
+            <input type="submit" name="" id="">
+        </form>
+        <div id="list_container">
+
+        </div>
+    </div>
+</body>
+<script>
+    function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+    }
+    let csrftoken = getCookie('csrftoken');
+
+
+
+    var cont = document.getElementById('list_container')
+
+    function delete_it() {
+        var url = `http://127.0.0.1:8000/api/delete/${d_active}`
+        fetch(url, {
+        method: 'DELETE',
+        headers: {
+                'Content-type':'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+        })
+        .then(function(response){
+            api();
+        })
+    }
+
+    var u_active = null;
+    var d_active = null;
+
+    function api(){
+        var url = 'http://127.0.0.1:8000/api/list'
+        cont.innerHTML = "<div></div>";
+        fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            let list = data
+
+            let i = 0;
+            list.forEach(element => {
+                
+                let me = `
+                <div>
+                    <p>${element.title}</p>
+                    <div>
+                        <button class='edit'   data-nr=${element.id} >Edit</button>
+                        <button class='delete' data-nr=${element.id} >Delete</button>
+                    </div>
+                </div>
+                `
+                cont.innerHTML += me
+        
+            });
+
+            var edit_tab = document.querySelectorAll('.edit');
+            var del_tab  = document.querySelectorAll('.delete');
+
+            edit_tab.forEach(element => {
+                element.addEventListener('click', ()=> {
+                    u_active = element.dataset.nr
+                })
+            })
+            del_tab.forEach(element => {
+                element.addEventListener('click', ()=>{
+                    d_active = element.dataset.nr
+                    delete_it()
+                })
+            })
+        });
+
+    }
+    var form_container = document.getElementById('form');
+    
+
+    form_container.addEventListener('submit', (e)=>{
+
+        
+        e.preventDefault()
+        var form  = document.getElementById('input_form');
+        var title = form.value;
+        var url   = 'http://127.0.0.1:8000/api/create'
+
+        if(u_active != null) {
+            url =   `http://127.0.0.1:8000/api/update/${u_active}`
+            u_active = null;
+        }
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-type':'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body:JSON.stringify({'title': title})
+        })
+        .then(function(response){
+            api();
+            form_container.reset()
+        })
+    })
+    
+    api();
+</script>
+</html>
